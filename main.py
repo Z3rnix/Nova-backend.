@@ -5,6 +5,9 @@ from google import genai
 from google.genai import types
 
 app = FastAPI()
+@app.get("/")
+async def raiz():
+    return {"estado": "N⬡va backend activo y operativo"}
 
 # Inicializar cliente con la API Key
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
