@@ -26,7 +26,7 @@ async def hablar(datos: MensajeInput):
 
         # Llamada al modelo Gemini 2.5 Flash
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-3.6-flash-lite",
             contents=datos.texto,
         )
 
