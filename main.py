@@ -93,17 +93,10 @@ async def hablar_con_nova(request: QueryRequest):
         }
 
         payload = {
-            "payload = {
             "model": "openrouter/free",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": request.texto}
-            ]
-        }",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": request.texto}
-            ]
         }
 
         response = requests.post(
