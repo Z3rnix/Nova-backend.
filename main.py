@@ -93,7 +93,7 @@ async def hablar_con_nova(request: QueryRequest):
         }
 
         payload = {
-            "model": "meta-llama/llama-3.1-8b-instruct:free",
+            "model": "deepseek/deepseek-chat:free",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": request.texto}
