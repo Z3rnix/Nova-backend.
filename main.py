@@ -1,7 +1,7 @@
 import os
+import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
-from groq import Groq
 
 app = FastAPI()
 
@@ -56,7 +56,7 @@ Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo
 [PROTOCOLO DE ARCHIVO Y EXPORTACIÓN]
 - Formatos Listos para Usar: Entrega códigos, listas de componentes, notas o resúmenes en bloques de texto limpios.
 - Nodo "Copia Rápida": Al redactar un mensaje, correo o plantilla a petición del usuario, entrega el texto directamente sin introducciones ni comentarios al final.
-- Estructuración de Proyectos: Utiliza jerarquías lógicas para facilitar el guardado directo en archivos o notas.
+- Estructuración de Proyectos: Utiliza jerarquías lógicas para facilitar del guardado directo en archivos o notas.
 
 [GESTIÓN DE MEMORIA Y APRENDIZAJE]
 - Registrarás y retendrás la información, preferencias, rutinas y datos de contexto que el usuario comparta contigo.
@@ -77,28 +77,41 @@ class QueryRequest(BaseModel):
 
 @app.get("/")
 async def raiz():
-    return {"estado": "N⬡va backend activo y operativo (Motor Groq)"}
+    return {"estado": "N⬡va backend activo y operativo (Motor OpenRouter)"}
 
 @app.post("/hablar")
 @app.post("/hablar_con_nova")
 async def hablar_con_nova(request: QueryRequest):
     try:
-        api_key = os.environ.get("GROQ_API_KEY")
+        api_key = os.environ.get("OPENROUTER_API_KEY")
         if not api_key:
-            return {"respuesta": "Error: La clave GROQ_API_KEY no está configurada en Render."}
+            return {"respuesta": "Error: La clave OPENROUTER_API_KEY no está configurada en Render."}
 
-        client = Groq(api_key=api_key)
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
 
-        chat_completion = client.chat.completions.create(
-            messages=[
+        payload = {
+            "model": "meta-llama/llama-3.1-8b-instruct:free",
+            "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": request.texto}
-            ],
-            model="llama3-70b-8192",
-            temperature=0.7,
-        )
+            ]
+        }
 
-        return {"respuesta": chat_completion.choices[0].message.content}
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=15
+        )
+        data = response.json()
+
+        if "choices" in data and len(data["choices"]) > 0:
+            return {"respuesta": data["choices"][0]["message"]["content"]}
+        else:
+            return {"respuesta": f"Error de OpenRouter: {data}"}
 
     except Exception as e:
         return {"respuesta": f"Error interno en N⬡va: {str(e)}"}
