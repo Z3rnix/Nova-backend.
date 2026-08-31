@@ -77,7 +77,7 @@ class QueryRequest(BaseModel):
 
 @app.get("/")
 async def raiz():
-    return {"estado": "N⬡va backend activo y operativo (Motor OpenRouter)"}
+    return {"estado": "N⬡va backend activo y operativo (Motor OpenRouter Auto-Free)"}
 
 @app.post("/hablar")
 @app.post("/hablar_con_nova")
@@ -97,6 +97,7 @@ async def hablar_con_nova(request: QueryRequest):
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": request.texto}
+            ]
         }
 
         response = requests.post(
