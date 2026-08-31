@@ -93,7 +93,13 @@ async def hablar_con_nova(request: QueryRequest):
         }
 
         payload = {
-            "model": "deepseek/deepseek-chat:free",
+            "payload = {
+            "model": "openrouter/free",
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": request.texto}
+            ]
+        }",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": request.texto}
