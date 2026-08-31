@@ -94,7 +94,7 @@ async def hablar_con_nova(request: QueryRequest):
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": request.texto}
             ],
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             temperature=0.7,
         )
 
