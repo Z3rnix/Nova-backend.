@@ -1,10 +1,15 @@
 import os
-import requests
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from google import genai
+from google.genai import types
 
 app = FastAPI()
 
+# Inicializamos el cliente oficial de Google GenAI usando la API Key de las variables de entorno de Render
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
+# Aquí va tu System Prompt completo y oficial de Nova
 SYSTEM_PROMPT = """
 [NOMBRE E IDENTIDAD]
 Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo y moderno.
@@ -72,46 +77,22 @@ Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo
 Tu objetivo es actuar como el núcleo de control exclusivo del usuario, adaptándote continuamente a su contexto personal y ejecutando sus órdenes con máxima precisión.
 """
 
-class QueryRequest(BaseModel):
-    texto: str
+class MessageRequest(BaseModel):
+    message: str
 
-@app.get("/")
-async def raiz():
-    return {"estado": "N⬡va backend activo y operativo (Motor OpenRouter Auto-Free)"}
-
-@app.post("/hablar")
-@app.post("/hablar_con_nova")
-async def hablar_con_nova(request: QueryRequest):
+@app.post("/chat")
+async def chat_with_nova(request: MessageRequest):
     try:
-        api_key = os.environ.get("OPENROUTER_API_KEY")
-        if not api_key:
-            return {"respuesta": "Error: La clave OPENROUTER_API_KEY no está configurada en Render."}
-
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "model": "openrouter/free",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": request.texto}
-            ]
-        }
-
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            json=payload,
-            headers=headers,
-            timeout=15
+        # Usamos el modelo oficial y rápido de Gemini (Flash) con las instrucciones de sistema integradas
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=request.message,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                temperature=0.7,
+            ),
         )
-        data = response.json()
-
-        if "choices" in data and len(data["choices"]) > 0:
-            return {"respuesta": data["choices"][0]["message"]["content"]}
-        else:
-            return {"respuesta": f"Error de OpenRouter: {data}"}
-
+        
+        return {"response": response.text}
     except Exception as e:
-        return {"respuesta": f"Error interno en N⬡va: {str(e)}"}
+        raise HTTPException(status_code=500, detail=str(e))
