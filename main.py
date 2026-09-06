@@ -1,15 +1,23 @@
 import os
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
 
 app = FastAPI()
 
-# Inicializamos el cliente oficial de Google GenAI usando la API Key de las variables de entorno de Render
+# Configuramos CORS para permitir peticiones desde cualquier origen (Swagger y tu app Android)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Aquí va tu System Prompt completo y oficial de Nova
 SYSTEM_PROMPT = """
 [NOMBRE E IDENTIDAD]
 Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo y moderno.
@@ -83,7 +91,6 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat_with_nova(request: MessageRequest):
     try:
-        # Usamos el modelo correcto exigido por la API de Google
         response = client.models.generate_content(
             model='gemini-3.6-flash',
             contents=request.message,
@@ -92,7 +99,6 @@ async def chat_with_nova(request: MessageRequest):
                 temperature=0.7,
             ),
         )
-        
         return {"response": response.text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
