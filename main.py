@@ -83,9 +83,9 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat_with_nova(request: MessageRequest):
     try:
-        # Usamos el modelo oficial y rápido de Gemini (Flash) con las instrucciones de sistema integradas
+        # Usamos el modelo correcto y oficial de Gemini Flash
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.5-flash',
             contents=request.message,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
