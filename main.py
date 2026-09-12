@@ -1,4 +1,5 @@
 import os
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -103,32 +104,7 @@ async def chat_with_nova(request: MessageRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
-        @app.post("/tts")
+@app.post("/tts")
 async def text_to_speech(request: MessageRequest):
     try:
-        api_key = os.environ.get("ELEVENLABS_API_KEY")
-        voice_id = "aZilAbZ5tl8i9lA1EF02"  # Cambia por tu Voice ID preferido
-        
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-        
-        headers = {
-            "Accept": "audio/mpeg",
-            "Content-Type": "application/json",
-            "xi-api-key": api_key
-        }
-        
-        payload = {
-            "text": request.message,
-            "model_id": "eleven_multilingual_v2"
-        }
-        
-        response = requests.post(url, json=payload, headers=headers)
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Error al generar audio en ElevenLabs")
-            
-        from fastapi.responses import Response
-        return Response(content=response.content, media_type="audio/mpeg")
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        api_key = os.
