@@ -126,6 +126,10 @@ async def text_to_speech(request: MessageRequest):
         response = requests.post(url, json=payload, headers=headers)
         
         if response.status_code != 200:
+            # Esto mostrará el error real que manda ElevenLabs en lugar de uno genérico
+            raise HTTPException(status_code=500, detail=f"ElevenLabs error: {response.text}")
+        
+        if response.status_code != 200:
             raise HTTPException(status_code=500, detail="Error al generar audio en ElevenLabs")
             
         from fastapi.responses import Response
