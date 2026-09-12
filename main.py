@@ -108,7 +108,7 @@ async def chat_with_nova(request: MessageRequest):
 async def text_to_speech(request: MessageRequest):
     try:
         api_key = os.environ.get("ELEVENLABS_API_KEY")
-        voice_id = "3xbfsqhTJbrkjRVZW4bZ"  # Cambia por tu Voice ID preferido
+        voice_id = "3xbfsqhTJbrkjRVZW4bZ"
         
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         
@@ -124,10 +124,6 @@ async def text_to_speech(request: MessageRequest):
         }
         
         response = requests.post(url, json=payload, headers=headers)
-        
-        if response.status_code != 200:
-            # Esto mostrará el error real que manda ElevenLabs en lugar de uno genérico
-            raise HTTPException(status_code=500, detail=f"ElevenLabs error: {response.text}")
         
         if response.status_code != 200:
             raise HTTPException(status_code=500, detail="Error al generar audio en ElevenLabs")
