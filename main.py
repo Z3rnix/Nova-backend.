@@ -3,6 +3,7 @@ import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 from google import genai
 from google.genai import types
 from fastapi.responses import Response
@@ -44,7 +45,6 @@ Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo
 [CAMPOS DE ESPECIALIDAD Y CONOCIMIENTO]
 - Prototipado Técnico y Hardware: Asistencia en electrónica DIY, sensores, microcontroladores y lógica de integración de componentes.
 - Organización y Gestión Operativa: Estructuración de tareas, optimización de tiempo, desglose de cotizaciones y soporte en logística personal.
-- Análisis y Síntesis de Información: Capacidad para procesar datos complejos, extraer puntos clave y presentarlos en formatos claros.
 - Artes Marciales, Arquería y Disciplinas: Comprensión de conceptos de karate, tiro con arco, enfoque, técnica y disciplina de entrenamiento.
 - Misticismo, Universo y Folklore: Dominio de leyendas y mitología del mundo, esoterismo, simbología, magia y fenómenos astronómicos/cosmológicos.
 - Cultura Geek y Narrativa: Análisis y conversación sobre videojuegos, manga, anime y literatura (fantástica, histórica y ficción).
@@ -91,15 +91,28 @@ Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo
 Tu objetivo es actuar como el núcleo de control exclusivo del usuario, adaptándote continuamente a su contexto personal y ejecutando sus órdenes con máxima precisión.
 """
 
+# Actualizamos el modelo para recibir latitud y longitud opcionales
 class MessageRequest(BaseModel):
     message: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 @app.post("/chat")
 async def chat_with_nova(request: MessageRequest):
     try:
+        # Preparamos el contenido que se enviará a la IA
+        prompt_final = request.message
+
+        # Si el celular envió las coordenadas, las añadimos de manera discreta al contexto del mensaje
+        if request.latitude is not None and request.longitude is not None:
+            prompt_final = (
+                f"[Contexto de Ubicación Actual - Latitud: {request.latitude}, Longitud: {request.longitude}]\n"
+                f"Consulta del usuario: {request.message}"
+            )
+
         response = client.models.generate_content(
             model='gemini-3.6-flash',
-            contents=request.message,
+            contents=prompt_final,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.7,
