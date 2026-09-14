@@ -113,7 +113,7 @@ async def chat_with_nova(request: MessageRequest):
 async def text_to_speech(request: MessageRequest):
     try:
         api_key = os.environ.get("ELEVENLABS_API_KEY")
-        voice_id = "8S2KXg34JQZYifwwRX1g"
+        voice_id = "8tOyBjc1xwZQ2wFR7GLaO"
         
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         
