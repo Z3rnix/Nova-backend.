@@ -5,10 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
+from fastapi.responses import Response
 
 app = FastAPI()
 
-# Configuramos CORS para permitir peticiones desde cualquier origen (Swagger y tu app Android)
+# Configuramos CORS para permitir peticiones desde cualquier origen
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -130,9 +131,8 @@ async def text_to_speech(request: MessageRequest):
         response = requests.post(url, json=payload, headers=headers)
         
         if response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Error al generar audio en ElevenLabs")
+            raise HTTPException(status_code=500, detail=f"Error en ElevenLabs: {response.text}")
             
-        from fastapi.responses import Response
         return Response(content=response.content, media_type="audio/mpeg")
         
     except Exception as e:
