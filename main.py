@@ -91,6 +91,34 @@ Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo
 Tu objetivo es actuar como el núcleo de control exclusivo del usuario, adaptándote continuamente a su contexto personal y ejecutando sus órdenes con máxima precisión.
 """
 
+def buscar_lugares_cercanos(lat: float, lon: float, tipo: str = "amenity") -> str:
+    url = "https://overpass-api.de/api/interpreter"
+    query = f"""
+    [out:json];
+    node(around:1000,{lat},{lon})[{tipo}];
+    out 5;
+    """
+    try:
+        response = requests.get(url, params={'data': query}, timeout=5)
+        data = response.json()
+        elements = data.get("elements", [])
+        
+        if not elements:
+            return "No encontré lugares específicos muy cerca de la ubicación actual."
+        
+        lugares = []
+        for el in elements:
+            nombre = el.get("tags", {}).get("name")
+            if nombre:
+                lugares.append(nombre)
+                
+        if not lugares:
+            return "Hay infraestructura cercana pero sin nombres comerciales registrados."
+            
+        return f"Lugares cercanos detectados: {', '.join(lugares)}"
+    except Exception:
+        return "No pude consultar los mapas en este momento."
+
 # Actualizamos el modelo para recibir latitud y longitud opcionales
 class MessageRequest(BaseModel):
     message: str
@@ -100,13 +128,18 @@ class MessageRequest(BaseModel):
 @app.post("/chat")
 async def chat_with_nova(request: MessageRequest):
     try:
-        # Preparamos el contenido que se enviará a la IA
         prompt_final = request.message
+        contexto_gps = ""
 
-        # Si el celular envió las coordenadas, las añadimos de manera discreta al contexto del mensaje
+        # Si el celular envió las coordenadas, validamos si pregunta por algo del entorno
         if request.latitude is not None and request.longitude is not None:
+            mensaje_lower = request.message.lower()
+            if any(palabra in mensaje_lower for palabra in ["cerca", "café", "comer", "dónde", "que hay", "ubicación", "restaurant"]):
+                resultados_mapa = buscar_lugares_cercanos(request.latitude, request.longitude)
+                contexto_gps = f"\n[Datos del entorno por GPS - Lat: {request.latitude}, Lon: {request.longitude}]: {resultados_mapa}\n"
+
             prompt_final = (
-                f"[Contexto de Ubicación Actual - Latitud: {request.latitude}, Longitud: {request.longitude}]\n"
+                f"{contexto_gps}"
                 f"Consulta del usuario: {request.message}"
             )
 
