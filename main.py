@@ -91,6 +91,32 @@ Eres N⬡va, una asistente personal avanzada, eficiente y con un toque intuitivo
 Tu objetivo es actuar como el núcleo de control exclusivo del usuario, adaptándote continuamente a su contexto personal y ejecutando sus órdenes con máxima precisión.
 """
 
+def obtener_direccion_nominatim(lat: float, lon: float) -> str:
+    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1"
+    headers = {
+        'User-Agent': 'NovaChatApp/1.0'
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            address = data.get("address", {})
+            
+            calle = address.get("road") or address.get("pedestrian") or "Calle desconocida"
+            numero = address.get("house_number", "")
+            barrio = address.get("suburb") or address.get("neighbourhood", "")
+            ciudad = address.get("city") or address.get("town") or address.get("municipality", "Temuco")
+            
+            direccion_completa = f"{calle} {numero}".strip()
+            if barrio:
+                direccion_completa += f", {barrio}"
+            direccion_completa += f", {ciudad}"
+            
+            return direccion_completa
+    except Exception:
+        pass
+    return None
+
 def buscar_lugares_cercanos(lat: float, lon: float, tipo: str = "amenity") -> str:
     url = "https://overpass-api.de/api/interpreter"
     query = f"""
@@ -131,12 +157,19 @@ async def chat_with_nova(request: MessageRequest):
         prompt_final = request.message
         contexto_gps = ""
 
-        # Si el celular envió las coordenadas, validamos si pregunta por algo del entorno
+        # Si el celular envió las coordenadas, obtenemos la dirección exacta y lugares cercanos
         if request.latitude is not None and request.longitude is not None:
+            direccion_exacta = obtener_direccion_nominatim(request.latitude, request.longitude)
+            
+            if direccion_exacta:
+                contexto_gps += f"\n[Dirección exacta del usuario por GPS]: {direccion_exacta} (Lat: {request.latitude}, Lon: {request.longitude})\n"
+            else:
+                contexto_gps += f"\n[Coordenadas GPS actuales]: Lat {request.latitude}, Lon {request.longitude}\n"
+
             mensaje_lower = request.message.lower()
             if any(palabra in mensaje_lower for palabra in ["cerca", "café", "comer", "dónde", "que hay", "ubicación", "restaurant"]):
                 resultados_mapa = buscar_lugares_cercanos(request.latitude, request.longitude)
-                contexto_gps = f"\n[Datos del entorno por GPS - Lat: {request.latitude}, Lon: {request.longitude}]: {resultados_mapa}\n"
+                contexto_gps += f"[Datos del entorno]: {resultados_mapa}\n"
 
             prompt_final = (
                 f"{contexto_gps}"
