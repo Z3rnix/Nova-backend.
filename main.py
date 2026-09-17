@@ -1,4 +1,5 @@
 import os
+import base64
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -157,6 +158,7 @@ class MessageRequest(BaseModel):
     message: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    image_base64: Optional[str] = None  # <--- Soporte para recibir fotos desde la cámara
 
 @app.post("/chat")
 async def chat_with_nova(request: MessageRequest):
@@ -182,9 +184,21 @@ async def chat_with_nova(request: MessageRequest):
                 f"Consulta del usuario: {request.message}"
             )
 
+        # Preparamos el contenido para Gemini (texto o texto + imagen si se adjuntó)
+        contenido_gemini = [prompt_final]
+
+        if request.image_base64:
+            image_bytes = base64.b64decode(request.image_base64)
+            contenido_gemini.append(
+                types.Part.from_bytes(
+                    data=image_bytes,
+                    mime_type="image/jpeg",
+                )
+            )
+
         response = client.models.generate_content(
             model='gemini-3.6-flash',
-            contents=prompt_final,
+            contents=contenido_gemini,
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 temperature=0.7,
