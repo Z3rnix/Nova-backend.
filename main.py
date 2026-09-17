@@ -117,31 +117,39 @@ def obtener_direccion_nominatim(lat: float, lon: float) -> str:
         pass
     return None
 
-def buscar_lugares_cercanos(lat: float, lon: float, tipo: str = "amenity") -> str:
+def buscar_lugares_cercanos(lat: float, lon: float) -> str:
     url = "https://overpass-api.de/api/interpreter"
     query = f"""
     [out:json];
-    node(around:1000,{lat},{lon})[{tipo}];
+    (
+      node(around:800,{lat},{lon})["shop"~"convenience|supermarket|grocery|general"];
+      way(around:800,{lat},{lon})["shop"~"convenience|supermarket|grocery|general"];
+      node(around:800,{lat},{lon})["amenity"~"marketplace|store"];
+    );
     out 5;
     """
     try:
-        response = requests.get(url, params={'data': query}, timeout=5)
+        response = requests.get(url, params={'data': query}, timeout=6)
+        if response.status_code != 200:
+            return "No se pudo conectar al servicio de mapas en este momento."
+            
         data = response.json()
         elements = data.get("elements", [])
         
         if not elements:
-            return "No encontré lugares específicos muy cerca de la ubicación actual."
+            return "No encontré almacenes o minimarkets registrados exactamente en este radio inmediato."
         
         lugares = []
         for el in elements:
-            nombre = el.get("tags", {}).get("name")
+            tags = el.get("tags", {})
+            nombre = tags.get("name")
             if nombre:
                 lugares.append(nombre)
                 
         if not lugares:
-            return "Hay infraestructura cercana pero sin nombres comerciales registrados."
+            return "Hay pequeños comercios cercanos pero no tienen el nombre comercial registrado en el mapa."
             
-        return f"Lugares cercanos detectados: {', '.join(lugares)}"
+        return f"Locales comerciales cercanos detectados: {', '.join(set(lugares))}"
     except Exception:
         return "No pude consultar los mapas en este momento."
 
@@ -165,7 +173,7 @@ async def chat_with_nova(request: MessageRequest):
                 contexto_gps += f"\n[Coordenadas GPS actuales]: Lat {request.latitude}, Lon {request.longitude}\n"
 
             mensaje_lower = request.message.lower()
-            if any(palabra in mensaje_lower for palabra in ["cerca", "café", "comer", "dónde", "que hay", "ubicación", "restaurant", "minimarket", "almacen", "local"]):
+            if any(palabra in mensaje_lower for palabra in ["cerca", "café", "comer", "dónde", "que hay", "ubicación", "restaurant", "minimarket", "almacen", "local", "minimarquet"]):
                 resultados_mapa = buscar_lugares_cercanos(request.latitude, request.longitude)
                 contexto_gps += f"[Datos del entorno]: {resultados_mapa}\n"
 
