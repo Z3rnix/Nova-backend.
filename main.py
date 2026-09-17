@@ -145,7 +145,6 @@ def buscar_lugares_cercanos(lat: float, lon: float, tipo: str = "amenity") -> st
     except Exception:
         return "No pude consultar los mapas en este momento."
 
-# Actualizamos el modelo para recibir latitud y longitud opcionales
 class MessageRequest(BaseModel):
     message: str
     latitude: Optional[float] = None
@@ -157,7 +156,6 @@ async def chat_with_nova(request: MessageRequest):
         prompt_final = request.message
         contexto_gps = ""
 
-        # Si el celular envió las coordenadas, obtenemos la dirección exacta y lugares cercanos
         if request.latitude is not None and request.longitude is not None:
             direccion_exacta = obtener_direccion_nominatim(request.latitude, request.longitude)
             
@@ -167,7 +165,7 @@ async def chat_with_nova(request: MessageRequest):
                 contexto_gps += f"\n[Coordenadas GPS actuales]: Lat {request.latitude}, Lon {request.longitude}\n"
 
             mensaje_lower = request.message.lower()
-            if any(palabra in mensaje_lower for palabra in ["cerca", "café", "comer", "dónde", "que hay", "ubicación", "restaurant"]):
+            if any(palabra in mensaje_lower for palabra in ["cerca", "café", "comer", "dónde", "que hay", "ubicación", "restaurant", "minimarket", "almacen", "local"]):
                 resultados_mapa = buscar_lugares_cercanos(request.latitude, request.longitude)
                 contexto_gps += f"[Datos del entorno]: {resultados_mapa}\n"
 
